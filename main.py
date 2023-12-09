@@ -29,15 +29,16 @@ def interactive_session():
     try:
         while True:
             query = input("> ")
-            if query.lower() == "exit":
+            if query.lower() == "exit" or query.lower() == "quit":
                 break
 
             session_history.append({"role": "user", "content": query})
             response = query_gpt4(session_history)
             print(colored(response, 'green', attrs=['bold']))
             session_history.append({"role": "assistant", "content": response})
-    except KeyboardInterrupt:
-        print("\nSession ended.")
+
+    except (KeyboardInterrupt, EOFError):
+        print("\nBye.")
 
 
 def main():
