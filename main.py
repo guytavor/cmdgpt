@@ -1,9 +1,7 @@
 import os
 import sys
 import threading
-
 from halo import Halo
-
 from openai import OpenAI
 from termcolor import colored
 
@@ -20,8 +18,23 @@ def query_gpt4(messages: list) -> str:
     return response.choices[0].message.content
 
 
-def query_in_background(query: str, response_list: list, messages: list):
-    response_list.append(query_gpt4(messages + [{"role": "user", "content": query}]))
+def process_query(query: str, messages: list) -> str:
+    response_list = []
+
+    # Start the query in a background thread
+    thread = threading.Thread(
+        target=lambda: response_list.append(query_gpt4(messages + [{"role": "user", "content": query}])))
+    thread.start()
+
+    spinner = Halo(text='Processing', spinner='dots')
+    spinner.start()
+
+    # Wait for the thread to finish
+    thread.join()
+
+    spinner.stop()
+
+    return response_list[0] if response_list else ''
 
 
 def interactive_session():
@@ -29,13 +42,14 @@ def interactive_session():
     try:
         while True:
             query = input("> ")
-            if query.lower() == "exit" or query.lower() == "quit":
+            if query.lower() in ["exit", "quit"]:
                 break
 
             session_history.append({"role": "user", "content": query})
-            response = query_gpt4(session_history)
-            print(colored(response, 'green', attrs=['bold']))
-            session_history.append({"role": "assistant", "content": response})
+            response = process_query(query, session_history)
+            if response:
+                print(colored(response, 'green', attrs=['bold']))
+                session_history.append({"role": "assistant", "content": response})
 
     except (KeyboardInterrupt, EOFError):
         print("\nBye.")
@@ -44,22 +58,9 @@ def interactive_session():
 def main():
     if len(sys.argv) > 1:
         query = ' '.join(sys.argv[1:])  # Join all arguments into a single string
-        response_list = []
-
-        # Start the query in a background thread
-        thread = threading.Thread(target=query_in_background, args=(query, response_list, []))
-        thread.start()
-
-        spinner = Halo(text='Processing', spinner='dots')
-        spinner.start()
-
-        # Wait for the background thread to finish
-        thread.join()
-
-        spinner.stop()
-
-        if response_list:
-            print(response_list[0])  # Print the response
+        response = process_query(query, [])
+        if response:
+            print(response)
     else:
         interactive_session()
 
