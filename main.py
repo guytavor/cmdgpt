@@ -3,7 +3,8 @@ import sys
 import threading
 from halo import Halo
 from openai import OpenAI
-from termcolor import colored
+from rich.console import Console
+from rich.markdown import Markdown
 
 
 def query_gpt4(messages: list) -> str:
@@ -39,6 +40,8 @@ def process_query(query: str, messages: list) -> str:
 
 def interactive_session():
     session_history = []
+    console = Console()
+
     try:
         while True:
             query = input("> ")
@@ -48,7 +51,8 @@ def interactive_session():
             session_history.append({"role": "user", "content": query})
             response = process_query(query, session_history)
             if response:
-                print(colored(response, 'green', attrs=['bold']))
+                markdown = Markdown(response)
+                console.print(markdown)
                 session_history.append({"role": "assistant", "content": response})
 
     except (KeyboardInterrupt, EOFError):
@@ -60,7 +64,9 @@ def main():
         query = ' '.join(sys.argv[1:])  # Join all arguments into a single string
         response = process_query(query, [])
         if response:
-            print(response)
+            console = Console()
+            markdown = Markdown(response)
+            console.print(markdown)
     else:
         interactive_session()
 

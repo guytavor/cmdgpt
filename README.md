@@ -1,5 +1,7 @@
 # cmdgpt
 #### Execute GPT Queries Directly from the Command Line
+The output will pretty print the ChatGPT Markdown answer to console.
+
 
 cmdgpt offers two modes for querying:
 
@@ -16,3 +18,5 @@ cmdgpt offers two modes for querying:
    > What is the meaning of life?
    ...
    ```
+
+   
