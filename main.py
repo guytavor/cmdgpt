@@ -45,6 +45,8 @@ def interactive_session():
     try:
         while True:
             query = input("> ")
+            if len(query.strip()) == 0:
+                continue
             if query.lower() in ["exit", "quit"]:
                 break
 
