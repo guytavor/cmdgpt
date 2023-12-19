@@ -1,3 +1,4 @@
+import argparse
 import os
 import queue
 import sys
@@ -21,7 +22,7 @@ def call_dall_e(prompt: str) -> str:
             model="dall-e-3",
             prompt=prompt,
             size="1024x1024",
-            quality="hd", #hd, normal
+            quality="hd",  # hd, normal
             n=1,
         )
         return response.data[0].url
@@ -112,9 +113,30 @@ def interactive_session():
         print("\nBye.")
 
 
+def display_usage():
+    usage_text = "*Usage*:\n" \
+        "* To start an interactive session: `cmdgpt` with no arguments\n" \
+        "* query gpt: `cmdgpt 'Your query here'` (with our without quotes as long as you don't have ? | or ! in your query)\n"\
+        "* Image generation:`cmdgpt pic|pix 'Image description here'`\n"\
+        "   - pix: generate an image with no additional detail.\n"\
+        "   - images are hd quality and 1024x1024 pixels.\n"
+    console = Console()
+    markdown = Markdown(usage_text)
+    console.print(markdown)
+
+
 def main():
-    if len(sys.argv) > 1:
-        query = ' '.join(sys.argv[1:])  # Join all arguments into a single string
+    parser = argparse.ArgumentParser(description='Process user input.', add_help=False)
+    parser.add_argument('args', nargs='*', help='Command line arguments')
+    parser.add_argument('-h', '--help', action='store_true', help='Show usage instructions')
+    args = parser.parse_args()
+
+    if args.help:
+        display_usage()
+        return
+
+    if args.args:
+        query = ' '.join(args.args)  # Join all arguments into a single string
 
         first_word = query.split()[0].lower()
         if first_word in ["pic", "pix"]:
