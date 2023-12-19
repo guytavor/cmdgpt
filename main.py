@@ -1,10 +1,61 @@
 import os
+import queue
 import sys
 import threading
+import time
+import webbrowser
+from os import _exit
+
 from halo import Halo
 from openai import OpenAI
 from rich.console import Console
 from rich.markdown import Markdown
+
+no_detail = "I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS:"
+
+
+def call_dall_e(prompt: str) -> str:
+    client = OpenAI()
+    try:
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            quality="hd", #hd, normal
+            n=1,
+        )
+        return response.data[0].url
+    except Exception as e:
+        print(f"\nOpenAI error: {e}")
+        _exit(1)
+
+
+def internal_generate_image(prompt: str, result_queue: queue.Queue):
+    url = call_dall_e(prompt)
+    result_queue.put(url)
+
+
+def generate_image(prompt: str):
+    start_time = time.time()
+
+    result_queue = queue.Queue()
+    thread = threading.Thread(target=internal_generate_image, args=(prompt, result_queue))
+    thread.start()
+
+    spinner = Halo(text='Creating image', spinner='dots')
+    spinner.start()
+    thread.join()
+    spinner.stop()
+
+    end_time = time.time()
+
+    image_url = result_queue.get()  # Retrieve the image URL from the queue
+
+    print(f"Image generated in {end_time - start_time:.2f} seconds")
+    print(f"Image URL: {image_url}")
+
+    # Open the image URL in the default web browser
+    webbrowser.open(image_url)
 
 
 def query_gpt4(messages: list) -> str:
@@ -64,6 +115,15 @@ def interactive_session():
 def main():
     if len(sys.argv) > 1:
         query = ' '.join(sys.argv[1:])  # Join all arguments into a single string
+
+        first_word = query.split()[0].lower()
+        if first_word in ["pic", "pix"]:
+            prompt = ' '.join(query.split()[1:])
+            if first_word == "pix":
+                prompt = no_detail + ' ' + prompt
+            generate_image(prompt)
+            exit()
+
         response = process_query(query, [])
         if response:
             console = Console()
