@@ -18,5 +18,11 @@ cmdgpt offers two modes for querying:
    > What is the meaning of life?
    ...
    ```
+3. **Image Generation with Dall-e**: first word should be `pic` or `pix`
 
-   
+   ```
+   cmdgpt pic "image of a cat"
+   ```
+
+   - Using `pix` will instruct Dall-e not to add any details to your prompt.
+   - Images are 1024x1024, HD quality.
